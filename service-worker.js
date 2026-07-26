@@ -1,7 +1,7 @@
 // service-worker.js
 // IMPORTANTE: subí CACHE_NAME cada vez que despliegues cambios,
 // así Android/Chrome refresca la caché en vez de mostrar la versión vieja.
-const CACHE_NAME = 'encomienda-v1';
+const CACHE_NAME = 'encomienda-v2';
 
 const ARCHIVOS_CACHE = [
   './',
