@@ -66,7 +66,9 @@ const VistaComparar = {
     conFecha.sort((a, b) => (a.lote?.fecha || '').localeCompare(b.lote?.fecha || ''));
 
     const nombreOriginal = historial[0]?.nombre || decodeURIComponent(nombreNorm);
-    const maxPrecio = Math.max(1, ...conFecha.map(c => c.producto.precio_usd || 0));
+    const unitario = (p) => (p.precio_usd || 0) / Math.max(1, Number(p.cantidad) || 1);
+    const pesoUnitario = (p) => (p.peso_g || 0) / Math.max(1, Number(p.cantidad) || 1);
+    const maxPrecio = Math.max(1, ...conFecha.map(c => unitario(c.producto)));
     const ultimo = conFecha[conFecha.length - 1];
 
     const tasaCambioProm = tasaCambioPromedio(lotes) || 7500;
@@ -76,18 +78,19 @@ const VistaComparar = {
       <div class="vista-encabezado"><h2>Planificar: ${nombreOriginal}</h2></div>
 
       <div class="seccion-titulo"><span>Historial de precios</span></div>
+      <p class="campo-ayuda" style="margin-top:-4px">Precio por pieza, para que se puedan comparar paquetes de distinto tamaño.</p>
       <div class="tarjeta" id="historial-precios"></div>
 
       <div class="seccion-titulo"><span>Estimar próxima compra</span></div>
       <div class="tarjeta">
         <div class="campo-fila">
           <div class="campo">
-            <label>Precio estimado (US$)</label>
-            <input type="number" step="0.01" id="plan-precio" value="${ultimo ? ultimo.producto.precio_usd : ''}">
+            <label>Precio estimado por pieza (US$)</label>
+            <input type="number" step="0.01" id="plan-precio" value="${ultimo ? unitario(ultimo.producto).toFixed(2) : ''}">
           </div>
           <div class="campo">
-            <label>Peso estimado (g)</label>
-            <input type="number" step="1" id="plan-peso" value="${ultimo ? ultimo.producto.peso_g : ''}">
+            <label>Peso estimado por pieza (g)</label>
+            <input type="number" step="1" id="plan-peso" value="${ultimo ? Math.round(pesoUnitario(ultimo.producto)) : ''}">
           </div>
         </div>
         <div class="campo-fila">
@@ -113,11 +116,12 @@ const VistaComparar = {
       histCont.outerHTML = `<p class="campo-ayuda">Todavía no compraste este producto antes.</p>`;
     } else {
       for (const c of conFecha) {
-        const pct = Math.max(6, ((c.producto.precio_usd || 0) / maxPrecio) * 100);
+        const cant = Math.max(1, Number(c.producto.cantidad) || 1);
+        const pct = Math.max(6, (unitario(c.producto) / maxPrecio) * 100);
         histCont.appendChild(el('div', { class: 'historial-precio' }, [
           el('span', { class: 'historial-precio__fecha' }, formatoFecha(c.lote?.fecha)),
           el('div', { class: 'historial-precio__barra' }, [el('div', { class: 'historial-precio__barra-interna', style: `width:${pct}%` })]),
-          el('span', { class: 'historial-precio__valor' }, formatoUsd(c.producto.precio_usd))
+          el('span', { class: 'historial-precio__valor' }, formatoUsd(unitario(c.producto)) + (cant > 1 ? ` (×${cant})` : ''))
         ]));
       }
     }

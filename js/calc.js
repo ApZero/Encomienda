@@ -16,6 +16,7 @@ function calcularLote(lote, productos) {
   const items = productos.map(p => {
     const precioUsd = Number(p.precio_usd) || 0;
     const pesoG = Number(p.peso_g) || 0;
+    const cantidad = Math.max(1, Number(p.cantidad) || 1);
     // cada producto carga su parte proporcional de impuestos + envío internacional
     const shareUsd = totalUsdItems > 0 ? precioUsd / totalUsdItems : (productos.length ? 1 / productos.length : 0);
     const usdConCargos = precioUsd + shareUsd * (impuestos + envioIntl);
@@ -29,7 +30,11 @@ function calcularLote(lote, productos) {
       gsProducto,
       senditGs,
       totalGs,
-      pesoShare
+      pesoShare,
+      cantidad,
+      precioUnitarioUsd: precioUsd / cantidad,
+      pesoUnitarioG: pesoG / cantidad,
+      totalUnitarioGs: totalGs / cantidad
     };
   });
 

@@ -7,17 +7,18 @@ const VistaProductos = {
       ? el('img', { class: 'item-producto__img', src: producto.imagen, alt: '' })
       : el('div', { class: 'item-producto__img item-producto__img--vacia' }, '🏷️');
     li.appendChild(img);
+    const cantidad = Math.max(1, Number(producto.cantidad) || 1);
     li.appendChild(el('div', { class: 'item__info' }, [
       el('div', { class: 'item__titulo' }, producto.nombre || 'Sin nombre'),
       el('div', { class: 'item__meta' }, [
         el('span', { class: 'etiqueta' }, producto.categoria || 'Sin categoría'),
-        ' · ',
+        cantidad > 1 ? ` · ${cantidad}× ` : ' · ',
         estrellasTexto(producto.valio_la_pena)
       ])
     ]));
     li.appendChild(el('div', { class: 'item__precio mono' }, [
       formatoGs(itemCalc ? itemCalc.totalGs : 0),
-      el('small', {}, formatoUsd(producto.precio_usd))
+      el('small', {}, cantidad > 1 && itemCalc ? `${formatoGs(itemCalc.totalUnitarioGs)} c/u` : formatoUsd(producto.precio_usd))
     ]));
     return li;
   },
@@ -176,9 +177,14 @@ const VistaProductos = {
           <div class="detalle-dato"><div class="detalle-dato__valor mono">${formatoGs(item ? item.senditGs : 0)}</div><div class="detalle-dato__etiqueta">Envío Sendit (₲)</div></div>
         </div>
         <div class="tarjeta__fila" style="margin-top:6px; padding-top:12px; border-top:1px solid var(--linea)">
-          <strong>Costo total</strong>
+          <strong>Costo total${item && item.cantidad > 1 ? ` (${item.cantidad} piezas)` : ''}</strong>
           <strong class="mono">${formatoGs(item ? item.totalGs : 0)}</strong>
         </div>
+        ${item && item.cantidad > 1 ? `
+        <div class="tarjeta__fila" style="margin-top:4px">
+          <span class="campo-ayuda">Por pieza (${formatoUsd(item.precioUnitarioUsd)} · ${formatoPeso(item.pesoUnitarioG)})</span>
+          <span class="mono">${formatoGs(item.totalUnitarioGs)}</span>
+        </div>` : ''}
       </div>
 
       ${producto.notas ? `<div class="tarjeta"><p style="margin:0">${producto.notas}</p></div>` : ''}
@@ -230,13 +236,18 @@ const VistaProductos = {
 
         <div class="campo-fila">
           <div class="campo">
-            <label>Precio (US$)</label>
+            <label>Precio total (US$)</label>
             <input type="number" step="0.01" name="precio_usd" value="${producto.precio_usd || ''}" required>
           </div>
           <div class="campo">
-            <label>Peso (g)</label>
+            <label>Peso total (g)</label>
             <input type="number" step="1" name="peso_g" value="${producto.peso_g || ''}">
           </div>
+        </div>
+        <div class="campo">
+          <label>Cantidad (piezas)</label>
+          <input type="number" step="1" min="1" name="cantidad" value="${producto.cantidad || 1}">
+          <p class="campo-ayuda" id="ayuda-unitario">Si compraste más de una pieza, el precio y el peso de arriba son del paquete completo — acá se calcula cuánto sale cada una.</p>
         </div>
 
         <div class="campo">
@@ -277,6 +288,21 @@ const VistaProductos = {
         <button type="submit" class="btn btn--principal" style="width:100%">Guardar producto</button>
       </form>
     `;
+
+    const actualizarAyudaUnitario = () => {
+      const precio = parseFloat(cont.querySelector('[name="precio_usd"]').value) || 0;
+      const peso = parseFloat(cont.querySelector('[name="peso_g"]').value) || 0;
+      const cant = Math.max(1, parseInt(cont.querySelector('[name="cantidad"]').value, 10) || 1);
+      const ayuda = cont.querySelector('#ayuda-unitario');
+      if (cant <= 1) {
+        ayuda.textContent = 'Si compraste más de una pieza, el precio y el peso de arriba son del paquete completo — acá se calcula cuánto sale cada una.';
+      } else {
+        ayuda.textContent = `Cada pieza: ${formatoUsd(precio / cant)}${peso ? ' · ' + formatoPeso(peso / cant) : ''}`;
+      }
+    };
+    ['precio_usd', 'peso_g', 'cantidad'].forEach(nombre =>
+      cont.querySelector(`[name="${nombre}"]`).addEventListener('input', actualizarAyudaUnitario));
+    actualizarAyudaUnitario();
 
     let calidad = producto.calidad || 0;
     let valio = producto.valio_la_pena || 0;
@@ -324,7 +350,9 @@ const VistaProductos = {
       for (const p of previos.slice(0, 4)) {
         if (!lotesCache[p.lote_id]) lotesCache[p.lote_id] = await Lotes.obtener(p.lote_id);
         const l = lotesCache[p.lote_id];
-        html += `<div class="tarjeta__fila" style="margin-top:6px"><span class="campo-ayuda">${formatoFecha(l && l.fecha)}</span><span class="mono">${formatoUsd(p.precio_usd)}</span></div>`;
+        const cant = Math.max(1, Number(p.cantidad) || 1);
+        const detalle = cant > 1 ? `${formatoUsd(p.precio_usd)} por ${cant} (${formatoUsd(p.precio_usd / cant)} c/u)` : formatoUsd(p.precio_usd);
+        html += `<div class="tarjeta__fila" style="margin-top:6px"><span class="campo-ayuda">${formatoFecha(l && l.fecha)}</span><span class="mono">${detalle}</span></div>`;
       }
       html += `</div>`;
       panelHistorial.innerHTML = html;
@@ -353,6 +381,7 @@ const VistaProductos = {
         categoria,
         precio_usd: parseFloat(fd.get('precio_usd')) || 0,
         peso_g: parseFloat(fd.get('peso_g')) || 0,
+        cantidad: Math.max(1, parseInt(fd.get('cantidad'), 10) || 1),
         calidad,
         valio_la_pena: valio,
         notas: fd.get('notas') || '',
