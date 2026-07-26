@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es-PY">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Encomienda — Registro de compras online</title>
+<meta name="theme-color" content="#3d3226">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="app">
+  <header class="encabezado">
+    <h1 class="encabezado__titulo"><span class="encabezado__caja"></span>Encomienda</h1>
+    <span class="encabezado__sub" id="fecha-hoy"></span>
+  </header>
+
+  <main id="vista"></main>
+
+  <nav class="nav-inferior">
+    <button class="nav-inferior__item" data-vista="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>
+      Hoy
+    </button>
+    <button class="nav-inferior__item" data-vista="lotes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+      Lotes
+    </button>
+    <button class="nav-inferior__item" data-vista="productos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7v10l8 4 8-4Z"/><path d="M4 7l8 4 8-4"/><path d="M12 11v10"/></svg>
+      Productos
+    </button>
+    <button class="nav-inferior__item" data-vista="comparar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+      Comparar
+    </button>
+    <button class="nav-inferior__item" data-vista="ajustes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      Ajustes
+    </button>
+  </nav>
+</div>
+
+<div id="toast-container"></div>
+<div id="modal-overlay"></div>
+<input type="file" id="input-importar-archivo" accept="application/json" style="display:none">
+
+<script src="js/db.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/util.js"></script>
+<script src="js/backup.js"></script>
+<script src="js/vista-dashboard.js"></script>
+<script src="js/vista-lotes.js"></script>
+<script src="js/vista-productos.js"></script>
+<script src="js/vista-comparar.js"></script>
+<script src="js/vista-ajustes.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
