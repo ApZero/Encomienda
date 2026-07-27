@@ -214,6 +214,16 @@ const VistaProductos = {
     const categorias = await Meta.obtener('categorias', CATEGORIAS_DEFECTO);
     const lotes = (await Lotes.todos()).sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
     const loteFijo = lotes.find(l => l.id === producto.lote_id);
+    const todosProductos = await Productos.todos();
+    const nombresPorNorm = {};
+    for (const p of todosProductos) {
+      if (p.id === editandoId) continue;
+      if (!nombresPorNorm[p.nombre_norm]) nombresPorNorm[p.nombre_norm] = { nombre: p.nombre, veces: 0 };
+      nombresPorNorm[p.nombre_norm].veces++;
+    }
+    const nombresConocidos = Object.entries(nombresPorNorm)
+      .map(([norm, info]) => ({ norm, nombre: info.nombre, veces: info.veces }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
     cont.innerHTML = `
       <div class="vista-encabezado"><h2>${editandoId ? 'Editar producto' : 'Nuevo producto'}</h2></div>
@@ -228,9 +238,10 @@ const VistaProductos = {
              <p class="campo-ayuda">¿Es una compra nueva? Primero <a href="#/lotes/nuevo">creá un lote</a>.</p>
            </div>`
       }
-        <div class="campo">
+        <div class="campo autocompletar">
           <label>Nombre del producto</label>
           <input type="text" name="nombre" value="${producto.nombre || ''}" required autocomplete="off">
+          <div class="autocompletar__lista" id="sugerencias-nombre"></div>
         </div>
         <div id="panel-historial"></div>
 
@@ -340,6 +351,8 @@ const VistaProductos = {
     // comparación de precios en vivo mientras se escribe el nombre
     const panelHistorial = cont.querySelector('#panel-historial');
     const nombreInput = cont.querySelector('[name="nombre"]');
+    const listaSugerencias = cont.querySelector('#sugerencias-nombre');
+
     const pintarHistorial = async () => {
       const nombreNorm = normalizar(nombreInput.value);
       if (!nombreNorm) { panelHistorial.innerHTML = ''; return; }
@@ -357,7 +370,34 @@ const VistaProductos = {
       html += `</div>`;
       panelHistorial.innerHTML = html;
     };
-    nombreInput.addEventListener('input', debounce(pintarHistorial, 300));
+
+    const mostrarSugerencias = () => {
+      const q = normalizar(nombreInput.value);
+      if (!q) { listaSugerencias.style.display = 'none'; listaSugerencias.innerHTML = ''; return; }
+      const coincidencias = nombresConocidos.filter(n => n.norm.includes(q) && n.norm !== q).slice(0, 6);
+      if (!coincidencias.length) { listaSugerencias.style.display = 'none'; listaSugerencias.innerHTML = ''; return; }
+      listaSugerencias.innerHTML = '';
+      for (const n of coincidencias) {
+        listaSugerencias.appendChild(el('div', {
+          class: 'autocompletar__item',
+          onmousedown: (e) => e.preventDefault(), // evita perder el foco antes del click
+          onclick: () => {
+            nombreInput.value = n.nombre;
+            listaSugerencias.style.display = 'none';
+            pintarHistorial();
+          }
+        }, [
+          n.nombre,
+          el('span', { class: 'campo-ayuda' }, `${n.veces}×`)
+        ]));
+      }
+      listaSugerencias.style.display = 'block';
+    };
+
+    const historialDebounced = debounce(pintarHistorial, 300);
+    nombreInput.addEventListener('input', () => { mostrarSugerencias(); historialDebounced(); });
+    nombreInput.addEventListener('focus', mostrarSugerencias);
+    nombreInput.addEventListener('blur', () => setTimeout(() => { listaSugerencias.style.display = 'none'; }, 120));
     pintarHistorial();
 
     cont.querySelector('#form-producto').addEventListener('submit', async (e) => {
